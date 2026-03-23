@@ -205,46 +205,97 @@ library/
 - Node.js 18+
 - MySQL 8.0+
 
-### 1. 克隆项目
+### WSL环境安装（推荐）
+
+#### 1. 安装依赖
 ```bash
-git clone <repository-url>
-cd library
+# 安装Java（通过sdkman）
+sdk install java 17.0.18-tem
+sdk install maven
+
+# 安装MySQL
+sudo apt update
+sudo apt install -y mysql-server
 ```
 
-### 2. 初始化数据库
+#### 2. 启动MySQL
 ```bash
-mysql -u root -p < backend/src/main/resources/schema.sql
+# 每次启动WSL后需要运行
+sudo service mysql start
+
+# 检查状态
+sudo service mysql status
 ```
 
-### 3. 配置后端
-编辑 `backend/src/main/resources/application.yml`：
-```yaml
-spring:
-  datasource:
-    url: jdbc:mysql://localhost:3306/library?useSSL=false&serverTimezone=UTC&characterEncoding=utf8
-    username: your_username
-    password: your_password
+#### 3. 配置MySQL（首次使用）
+```bash
+# 登录MySQL（免密）
+sudo mysql
+
+# 在MySQL中设置root密码为空
+ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '';
+FLUSH PRIVILEGES;
+EXIT;
 ```
 
-### 4. 启动后端
+#### 4. 初始化数据库
 ```bash
-cd backend
+mysql -u root < /mnt/e/gitProjects/library/backend/src/main/resources/schema.sql
+```
+
+#### 5. 启动后端
+```bash
+cd /mnt/e/gitProjects/library/backend
 mvn spring-boot:run
 ```
-
 后端服务启动在 http://localhost:8080
 
-### 5. 启动前端
+#### 6. 启动前端
 ```bash
-cd frontend
+cd /mnt/e/gitProjects/library/frontend
 npm install
 npm run dev
 ```
-
 前端服务启动在 http://localhost:5173
 
-### 6. 访问系统
-打开浏览器访问 http://localhost:5173
+#### 7. 访问系统
+在Windows浏览器中打开 http://localhost:5173
+
+### 快速启动脚本
+
+创建启动脚本 `start.sh`：
+```bash
+#!/bin/bash
+# 启动MySQL
+sudo service mysql start
+
+# 启动后端（后台运行）
+cd /mnt/e/gitProjects/library/backend
+nohup mvn spring-boot:run > /tmp/backend.log 2>&1 &
+echo "后端启动中..."
+
+# 启动前端（后台运行）
+cd /mnt/e/gitProjects/library/frontend
+nohup npm run dev > /tmp/frontend.log 2>&1 &
+echo "前端启动中..."
+
+echo "服务启动完成！"
+echo "前端: http://localhost:5173"
+echo "后端: http://localhost:8080"
+```
+
+### 停止服务
+
+```bash
+# 停止后端
+pkill -f "spring-boot:run"
+
+# 停止前端
+pkill -f "vite"
+
+# 停止MySQL
+sudo service mysql stop
+```
 
 ## 默认账号
 
@@ -324,6 +375,42 @@ npm run dev
 | return_date | DATE | 归还日期 |
 | status | ENUM | 状态（BORROWED/RETURNED/OVERDUE） |
 | created_at | DATETIME | 创建时间 |
+
+## 快速开始
+
+### 首次使用
+```bash
+# 1. 安装MySQL（如果未安装）
+sudo apt install -y mysql-server
+
+# 2. 配置MySQL
+sudo mysql
+ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '';
+FLUSH PRIVILEGES;
+EXIT;
+
+# 3. 初始化数据库
+mysql -u root < /mnt/e/gitProjects/library/backend/src/main/resources/schema.sql
+```
+
+### 每次启动
+```bash
+# 终端1：启动MySQL
+sudo service mysql start
+
+# 终端2：启动后端
+cd /mnt/e/gitProjects/library/backend
+mvn spring-boot:run
+
+# 终端3：启动前端
+cd /mnt/e/gitProjects/library/frontend
+npm run dev
+```
+
+### 访问系统
+- 前端：http://localhost:5173
+- 后端：http://localhost:8080
+- 管理员：admin / admin123
 
 ## 开发说明
 
